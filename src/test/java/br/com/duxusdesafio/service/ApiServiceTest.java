@@ -3,16 +3,14 @@ package br.com.duxusdesafio.service;
 import br.com.duxusdesafio.model.ComposicaoTime;
 import br.com.duxusdesafio.model.Integrante;
 import br.com.duxusdesafio.model.Time;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Testes unitários para {@link ApiService}.
@@ -29,7 +27,7 @@ import static org.junit.Assert.*;
  *   <li>Volante    → função mais recorrente (4 aparições)</li>
  * </ul>
  */
-public class ApiServiceTest {
+class ApiServiceTest {
 
     private ApiService apiService;
 
@@ -53,8 +51,8 @@ public class ApiServiceTest {
 
     private List<Time> todosOsTimes;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         apiService = new ApiService();
 
         // Jogadores do São Paulo FC
@@ -82,26 +80,26 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void timeDaData_deveRetornarTimeCorreto() {
+    void timeDaData_deveRetornarTimeCorreto() {
         // Existem dois times em 07/01/2024 (São Paulo e Palmeiras); basta não ser null
         Time resultado = apiService.timeDaData(LocalDate.of(2024, 1, 7), todosOsTimes);
-        assertNotNull("Deve retornar um time para 07/01/2024", resultado);
+        assertNotNull(resultado, "Deve retornar um time para 07/01/2024");
         assertEquals(LocalDate.of(2024, 1, 7), resultado.getData());
     }
 
     @Test
-    public void timeDaData_deveRetornarNullParaDataInexistente() {
+    void timeDaData_deveRetornarNullParaDataInexistente() {
         Time resultado = apiService.timeDaData(LocalDate.of(2099, 12, 31), todosOsTimes);
-        assertNull("Deve retornar null quando não há time na data informada", resultado);
+        assertNull(resultado, "Deve retornar null quando não há time na data informada");
     }
 
     @Test
-    public void timeDaData_deveRetornarNullParaListaVazia() {
+    void timeDaData_deveRetornarNullParaListaVazia() {
         assertNull(apiService.timeDaData(LocalDate.of(2024, 1, 7), Collections.emptyList()));
     }
 
     @Test
-    public void timeDaData_deveRetornarNullParaDataNull() {
+    void timeDaData_deveRetornarNullParaDataNull() {
         assertNull(apiService.timeDaData(null, todosOsTimes));
     }
 
@@ -110,26 +108,26 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void integranteMaisUsado_semFiltroDeData_deveRetornarHernanes() {
+    void integranteMaisUsado_semFiltroDeData_deveRetornarHernanes() {
         // Hernanes: timeSP1 + timeSP2 + timeSP3 + timePalm = 4 aparições (maior)
         Integrante resultado = apiService.integranteMaisUsado(null, null, todosOsTimes);
         assertNotNull(resultado);
-        assertEquals("Hernanes deve ser o jogador mais usado no período total",
-                hernanes.getId(), resultado.getId());
+        assertEquals(hernanes.getId(), resultado.getId(),
+                "Hernanes deve ser o jogador mais usado no período total");
     }
 
     @Test
-    public void integranteMaisUsado_comFiltroDeData_deveConsiderarApenasOPeriodo() {
+    void integranteMaisUsado_comFiltroDeData_deveConsiderarApenasOPeriodo() {
         // Fevereiro: apenas timeSantos → Calleri e Kaká com 1 aparição cada (empate)
         Integrante resultado = apiService.integranteMaisUsado(
                 LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 28), todosOsTimes);
         assertNotNull(resultado);
-        assertTrue("Deve retornar Calleri ou Kaká (empate em fev/2024)",
-                resultado.getId().equals(calleri.getId()) || resultado.getId().equals(kaka.getId()));
+        assertTrue(resultado.getId().equals(calleri.getId()) || resultado.getId().equals(kaka.getId()),
+                "Deve retornar Calleri ou Kaká (empate em fev/2024)");
     }
 
     @Test
-    public void integranteMaisUsado_listaVazia_deveRetornarNull() {
+    void integranteMaisUsado_listaVazia_deveRetornarNull() {
         assertNull(apiService.integranteMaisUsado(null, null, Collections.emptyList()));
     }
 
@@ -138,27 +136,27 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void integrantesDoTimeMaisRecorrente_deveRetornarJogadoresDoSaoPaulo() {
+    void integrantesDoTimeMaisRecorrente_deveRetornarJogadoresDoSaoPaulo() {
         // São Paulo aparece 3x → clube mais recorrente
         // Time mais recente do São Paulo: 21/01/2024 → Hernanes e Calleri
         List<String> resultado = apiService.integrantesDoTimeMaisRecorrente(null, null, todosOsTimes);
         assertNotNull(resultado);
-        assertFalse("Lista não deve ser vazia", resultado.isEmpty());
-        assertTrue("Deve conter Hernanes (integrante do time mais recente do São Paulo)",
-                resultado.contains("Hernanes"));
-        assertTrue("Deve conter Calleri (integrante do time mais recente do São Paulo)",
-                resultado.contains("Calleri"));
+        assertFalse(resultado.isEmpty(), "Lista não deve ser vazia");
+        assertTrue(resultado.contains("Hernanes"),
+                "Deve conter Hernanes (integrante do time mais recente do São Paulo)");
+        assertTrue(resultado.contains("Calleri"),
+                "Deve conter Calleri (integrante do time mais recente do São Paulo)");
     }
 
     @Test
-    public void integrantesDoTimeMaisRecorrente_listaVazia_deveRetornarListaVazia() {
+    void integrantesDoTimeMaisRecorrente_listaVazia_deveRetornarListaVazia() {
         List<String> resultado = apiService.integrantesDoTimeMaisRecorrente(null, null, Collections.emptyList());
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
     }
 
     @Test
-    public void integrantesDoTimeMaisRecorrente_periodoSemTimes_deveRetornarListaVazia() {
+    void integrantesDoTimeMaisRecorrente_periodoSemTimes_deveRetornarListaVazia() {
         List<String> resultado = apiService.integrantesDoTimeMaisRecorrente(
                 LocalDate.of(2099, 1, 1), LocalDate.of(2099, 12, 31), todosOsTimes);
         assertTrue(resultado.isEmpty());
@@ -169,17 +167,18 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void funcaoMaisRecorrente_semFiltro_deveRetornarVolante() {
+    void funcaoMaisRecorrente_semFiltro_deveRetornarVolante() {
         // Volante  (Hernanes):   SP1 + SP2 + SP3 + Palm = 4 aparições
         // Meia     (Kaká):       SP1 + SP2 + Santos      = 3 aparições
         // Atacante: LucasMoura(1) + Calleri(2)           = 3 aparições
         // Goleiro  (RogérioCeni): Palm                   = 1 aparição
         String resultado = apiService.funcaoMaisRecorrente(null, null, todosOsTimes);
-        assertEquals("Volante deve ser a função mais recorrente no período total", "Volante", resultado);
+        assertEquals("Volante", resultado,
+                "Volante deve ser a função mais recorrente no período total");
     }
 
     @Test
-    public void funcaoMaisRecorrente_comFiltroDeData_deveConsiderarApenasOPeriodo() {
+    void funcaoMaisRecorrente_comFiltroDeData_deveConsiderarApenasOPeriodo() {
         // Janeiro: Volante=4, Meia=2, Atacante=2, Goleiro=1 → Volante
         String resultado = apiService.funcaoMaisRecorrente(
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 31), todosOsTimes);
@@ -187,7 +186,7 @@ public class ApiServiceTest {
     }
 
     @Test
-    public void funcaoMaisRecorrente_listaVazia_deveRetornarNull() {
+    void funcaoMaisRecorrente_listaVazia_deveRetornarNull() {
         assertNull(apiService.funcaoMaisRecorrente(null, null, Collections.emptyList()));
     }
 
@@ -196,13 +195,14 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void clubeMaisRecorrente_semFiltro_deveRetornarSaoPaulo() {
+    void clubeMaisRecorrente_semFiltro_deveRetornarSaoPaulo() {
         String resultado = apiService.clubeMaisRecorrente(null, null, todosOsTimes);
-        assertEquals("São Paulo deve ser o clube mais recorrente (3 aparições)", "São Paulo", resultado);
+        assertEquals("São Paulo", resultado,
+                "São Paulo deve ser o clube mais recorrente (3 aparições)");
     }
 
     @Test
-    public void clubeMaisRecorrente_comFiltroDeData_deveRetornarCorreto() {
+    void clubeMaisRecorrente_comFiltroDeData_deveRetornarCorreto() {
         // Fevereiro: apenas Santos
         String resultado = apiService.clubeMaisRecorrente(
                 LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 28), todosOsTimes);
@@ -210,7 +210,7 @@ public class ApiServiceTest {
     }
 
     @Test
-    public void clubeMaisRecorrente_listaVazia_deveRetornarNull() {
+    void clubeMaisRecorrente_listaVazia_deveRetornarNull() {
         assertNull(apiService.clubeMaisRecorrente(null, null, Collections.emptyList()));
     }
 
@@ -219,25 +219,25 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void contagemDeClubesNoPeriodo_semFiltro_deveRetornarContagensCorretas() {
+    void contagemDeClubesNoPeriodo_semFiltro_deveRetornarContagensCorretas() {
         Map<String, Long> resultado = apiService.contagemDeClubesNoPeriodo(null, null, todosOsTimes);
-        assertEquals("São Paulo deve ter 3 aparições", 3L, (long) resultado.get("São Paulo"));
-        assertEquals("Palmeiras deve ter 1 aparição",  1L, (long) resultado.get("Palmeiras"));
-        assertEquals("Santos deve ter 1 aparição",     1L, (long) resultado.get("Santos"));
+        assertEquals(3L, (long) resultado.get("São Paulo"),   "São Paulo deve ter 3 aparições");
+        assertEquals(1L, (long) resultado.get("Palmeiras"),   "Palmeiras deve ter 1 aparição");
+        assertEquals(1L, (long) resultado.get("Santos"),      "Santos deve ter 1 aparição");
     }
 
     @Test
-    public void contagemDeClubesNoPeriodo_comFiltroDeData_deveConsiderarApenasOPeriodo() {
+    void contagemDeClubesNoPeriodo_comFiltroDeData_deveConsiderarApenasOPeriodo() {
         // Janeiro: São Paulo=3, Palmeiras=1 (Santos é fevereiro)
         Map<String, Long> resultado = apiService.contagemDeClubesNoPeriodo(
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 31), todosOsTimes);
         assertEquals(3L, (long) resultado.get("São Paulo"));
         assertEquals(1L, (long) resultado.get("Palmeiras"));
-        assertFalse("Santos não deve aparecer em janeiro", resultado.containsKey("Santos"));
+        assertFalse(resultado.containsKey("Santos"), "Santos não deve aparecer em janeiro");
     }
 
     @Test
-    public void contagemDeClubesNoPeriodo_listaVazia_deveRetornarMapaVazio() {
+    void contagemDeClubesNoPeriodo_listaVazia_deveRetornarMapaVazio() {
         assertTrue(apiService.contagemDeClubesNoPeriodo(null, null, Collections.emptyList()).isEmpty());
     }
 
@@ -246,31 +246,31 @@ public class ApiServiceTest {
     // =========================================================================
 
     @Test
-    public void contagemPorFuncao_semFiltro_deveRetornarContagensCorretas() {
+    void contagemPorFuncao_semFiltro_deveRetornarContagensCorretas() {
         Map<String, Long> resultado = apiService.contagemPorFuncao(null, null, todosOsTimes);
         // Volante  (Hernanes):    SP1 + SP2 + SP3 + Palm             = 4
-        assertEquals("Volante deve ter 4 aparições",  4L, (long) resultado.get("Volante"));
+        assertEquals(4L, (long) resultado.get("Volante"),   "Volante deve ter 4 aparições");
         // Meia     (Kaká):        SP1 + SP2 + Santos                 = 3
-        assertEquals("Meia deve ter 3 aparições",     3L, (long) resultado.get("Meia"));
+        assertEquals(3L, (long) resultado.get("Meia"),      "Meia deve ter 3 aparições");
         // Atacante: LucasMoura(SP1=1) + Calleri(SP3 + Santos = 2)   = 3
-        assertEquals("Atacante deve ter 3 aparições", 3L, (long) resultado.get("Atacante"));
+        assertEquals(3L, (long) resultado.get("Atacante"),  "Atacante deve ter 3 aparições");
         // Goleiro  (RogérioCeni): Palm                               = 1
-        assertEquals("Goleiro deve ter 1 aparição",   1L, (long) resultado.get("Goleiro"));
+        assertEquals(1L, (long) resultado.get("Goleiro"),   "Goleiro deve ter 1 aparição");
     }
 
     @Test
-    public void contagemPorFuncao_comFiltroDeData_deveConsiderarApenasOPeriodo() {
+    void contagemPorFuncao_comFiltroDeData_deveConsiderarApenasOPeriodo() {
         // Fevereiro: timeSantos → Calleri (Atacante) + Kaká (Meia) = 1 cada
         Map<String, Long> resultado = apiService.contagemPorFuncao(
                 LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 28), todosOsTimes);
         assertEquals(1L, (long) resultado.get("Atacante"));
         assertEquals(1L, (long) resultado.get("Meia"));
-        assertFalse("Volante não deve aparecer em fevereiro", resultado.containsKey("Volante"));
-        assertFalse("Goleiro não deve aparecer em fevereiro", resultado.containsKey("Goleiro"));
+        assertFalse(resultado.containsKey("Volante"), "Volante não deve aparecer em fevereiro");
+        assertFalse(resultado.containsKey("Goleiro"), "Goleiro não deve aparecer em fevereiro");
     }
 
     @Test
-    public void contagemPorFuncao_listaVazia_deveRetornarMapaVazio() {
+    void contagemPorFuncao_listaVazia_deveRetornarMapaVazio() {
         assertTrue(apiService.contagemPorFuncao(null, null, Collections.emptyList()).isEmpty());
     }
 
