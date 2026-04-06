@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consultas – Duxus Challenge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .resultado { background: #f8f9fa; border-radius: 6px; padding: 12px; min-height: 48px; font-family: monospace; white-space: pre-wrap; }
+        .card-header { font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">⚡ Duxus Challenge</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/integrantes">Integrantes</a>
+            <a class="nav-link" href="/times">Times</a>
+            <a class="nav-link active" href="/consultas">Consultas</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-4">
+    <h2 class="mb-1">Consultas Analíticas</h2>
+    <p class="text-muted mb-4">Os dados são processados em Java — nenhuma função de agregação SQL é utilizada.</p>
+
+    <div class="row g-4">
+
+        <!-- 1. Time da Data -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">1. Time da Data</div>
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Data</label>
+                            <input type="date" id="tdd_data" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="consultar('time-da-data', {data: v('tdd_data')}, 'res_tdd')">Consultar</button>
+                        </div>
+                    </div>
+                    <div class="mt-3 resultado" id="res_tdd">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Integrante Mais Usado -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">2. Integrante Mais Usado</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="imu_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="imu_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-secondary mt-2 w-100" onclick="consultar('integrante-mais-usado', {dataInicial: v('imu_ini'), dataFinal: v('imu_fim')}, 'res_imu')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_imu">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Integrantes do Time Mais Recorrente -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">3. Integrantes do Time Mais Recorrente</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="itmr_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="itmr_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-secondary mt-2 w-100" onclick="consultar('integrantes-do-time-mais-recorrente', {dataInicial: v('itmr_ini'), dataFinal: v('itmr_fim')}, 'res_itmr')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_itmr">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Função Mais Recorrente -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">4. Função Mais Recorrente</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="fmr_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="fmr_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-success mt-2 w-100" onclick="consultar('funcao-mais-recorrente', {dataInicial: v('fmr_ini'), dataFinal: v('fmr_fim')}, 'res_fmr')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_fmr">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Clube Mais Recorrente -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">5. Clube Mais Recorrente</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="cmr_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="cmr_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-success mt-2 w-100" onclick="consultar('clube-mais-recorrente', {dataInicial: v('cmr_ini'), dataFinal: v('cmr_fim')}, 'res_cmr')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_cmr">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Contagem de Clubes no Período -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning">6. Contagem de Clubes no Período</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="ccp_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="ccp_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-warning mt-2 w-100" onclick="consultar('contagem-de-clubes', {dataInicial: v('ccp_ini'), dataFinal: v('ccp_fim')}, 'res_ccp')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_ccp">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Contagem por Função -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning">7. Contagem por Função</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Data Inicial</label><input type="date" id="cpf_ini" class="form-control"></div>
+                        <div class="col-6"><label class="form-label">Data Final</label><input type="date" id="cpf_fim" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-warning mt-2 w-100" onclick="consultar('contagem-por-funcao', {dataInicial: v('cpf_ini'), dataFinal: v('cpf_fim')}, 'res_cpf')">Consultar</button>
+                    <div class="mt-3 resultado" id="res_cpf">–</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /row -->
+</div>
+
+<script>
+    /** Retorna o valor de um campo, ou null se estiver vazio. */
+    function v(id) {
+        const val = document.getElementById(id).value;
+        return val ? val : null;
+    }
+
+    /**
+     * Realiza a chamada ao endpoint REST e exibe o resultado formatado.
+     * @param {string} endpoint - sufixo do endpoint (ex: 'time-da-data')
+     * @param {Object} params   - parâmetros query string (valores null são omitidos)
+     * @param {string} resultId - id do elemento onde exibir o resultado
+     */
+    async function consultar(endpoint, params, resultId) {
+        const qs = Object.entries(params)
+            .filter(([, v]) => v !== null && v !== '')
+            .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+            .join('&');
+
+        const url = `/api/${endpoint}` + (qs ? '?' + qs : '');
+        const el = document.getElementById(resultId);
+
+        try {
+            const resp = await fetch(url);
+            if (resp.status === 404) {
+                el.textContent = 'Nenhum resultado encontrado.';
+                return;
+            }
+            const data = await resp.json();
+            el.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            el.textContent = 'Erro na requisição: ' + err.message;
+        }
+    }
+</script>
+</body>
+</html>
