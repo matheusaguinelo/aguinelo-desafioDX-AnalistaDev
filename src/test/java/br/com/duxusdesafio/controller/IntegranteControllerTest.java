@@ -1,21 +1,25 @@
 package br.com.duxusdesafio.controller;
 
+import br.com.duxusdesafio.dto.IntegranteResponse;
+import br.com.duxusdesafio.exception.EntityNotFoundException;
 import br.com.duxusdesafio.model.Integrante;
-import br.com.duxusdesafio.repository.IntegranteRepository;
+import br.com.duxusdesafio.service.IntegranteService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -24,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Testes de integração da camada web para {@link IntegranteController}.
  *
  * <p>Utiliza {@code @WebMvcTest} para carregar apenas a camada MVC e
- * {@code @MockBean} para isolar o repositório, validando o comportamento
- * dos endpoints REST sem acesso ao banco de dados.</p>
+ * {@code @MockBean} para isolar o service, validando os endpoints REST
+ * sem acesso ao banco de dados.</p>
  */
 @WebMvcTest(IntegranteController.class)
 class IntegranteControllerTest {
@@ -37,39 +41,41 @@ class IntegranteControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private IntegranteRepository integranteRepository;
+    private IntegranteService integranteService;
 
-    private Integrante rogerioCeni;
-    private Integrante kaka;
+    private IntegranteResponse rogerioCeniResponse;
+    private IntegranteResponse kakaResponse;
 
     @BeforeEach
     void setUp() {
-        rogerioCeni = Integrante.builder().id(1L).nome("Rogério Ceni").funcao("Goleiro").build();
-        kaka        = Integrante.builder().id(2L).nome("Kaká").funcao("Meia").build();
+        rogerioCeniResponse = new IntegranteResponse(1L, "Rogério Ceni", "Goleiro");
+        kakaResponse        = new IntegranteResponse(2L, "Kaká", "Meia");
     }
 
     // =========================================================================
-    // GET /api/integrantes
+    // GET /api/integrantes (paginado)
     // =========================================================================
 
     @Test
-    void listarTodos_deveRetornarListaDeIntegrantes() throws Exception {
-        when(integranteRepository.findAll()).thenReturn(Arrays.asList(rogerioCeni, kaka));
+    void listarTodos_deveRetornarPageDeIntegrantes() throws Exception {
+        when(integranteService.listarTodos(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(rogerioCeniResponse, kakaResponse)));
 
         mockMvc.perform(get("/api/integrantes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].nome").value("Rogério Ceni"))
-                .andExpect(jsonPath("$[1].nome").value("Kaká"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].nome").value("Rogério Ceni"))
+                .andExpect(jsonPath("$.content[1].nome").value("Kaká"));
     }
 
     @Test
-    void listarTodos_listaVazia_deveRetornarArrayVazio() throws Exception {
-        when(integranteRepository.findAll()).thenReturn(Collections.emptyList());
+    void listarTodos_listaVazia_deveRetornarPageVazia() throws Exception {
+        when(integranteService.listarTodos(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/integrantes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     // =========================================================================
@@ -78,7 +84,7 @@ class IntegranteControllerTest {
 
     @Test
     void buscarPorId_encontrado_deveRetornar200() throws Exception {
-        when(integranteRepository.findById(1L)).thenReturn(Optional.of(rogerioCeni));
+        when(integranteService.buscarPorId(1L)).thenReturn(rogerioCeniResponse);
 
         mockMvc.perform(get("/api/integrantes/1"))
                 .andExpect(status().isOk())
@@ -88,10 +94,12 @@ class IntegranteControllerTest {
 
     @Test
     void buscarPorId_naoEncontrado_deveRetornar404() throws Exception {
-        when(integranteRepository.findById(99L)).thenReturn(Optional.empty());
+        when(integranteService.buscarPorId(99L))
+                .thenThrow(new EntityNotFoundException("Integrante não encontrado com id: 99"));
 
         mockMvc.perform(get("/api/integrantes/99"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NOT_FOUND"));
     }
 
     // =========================================================================
@@ -99,16 +107,17 @@ class IntegranteControllerTest {
     // =========================================================================
 
     @Test
-    void criar_dadosValidos_deveRetornar200ComIntegranteSalvo() throws Exception {
+    void criar_dadosValidos_deveRetornar201ComIntegranteSalvo() throws Exception {
         Integrante novoIntegrante = Integrante.builder().nome("Hernanes").funcao("Volante").build();
-        Integrante integranteSalvo = Integrante.builder().id(3L).nome("Hernanes").funcao("Volante").build();
+        IntegranteResponse salvo  = new IntegranteResponse(3L, "Hernanes", "Volante");
 
-        when(integranteRepository.save(any(Integrante.class))).thenReturn(integranteSalvo);
+        when(integranteService.criar(any(Integrante.class))).thenReturn(salvo);
 
         mockMvc.perform(post("/api/integrantes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(novoIntegrante)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.id").value(3))
                 .andExpect(jsonPath("$.nome").value("Hernanes"))
                 .andExpect(jsonPath("$.funcao").value("Volante"));
@@ -120,10 +129,10 @@ class IntegranteControllerTest {
 
     @Test
     void atualizar_integranteExistente_deveRetornar200() throws Exception {
-        Integrante atualizado = Integrante.builder().id(1L).nome("Rogério Ceni").funcao("Goleiro Artilheiro").build();
+        Integrante atualizado       = Integrante.builder().nome("Rogério Ceni").funcao("Goleiro Artilheiro").build();
+        IntegranteResponse response = new IntegranteResponse(1L, "Rogério Ceni", "Goleiro Artilheiro");
 
-        when(integranteRepository.existsById(1L)).thenReturn(true);
-        when(integranteRepository.save(any(Integrante.class))).thenReturn(atualizado);
+        when(integranteService.atualizar(eq(1L), any(Integrante.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/integrantes/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -134,12 +143,16 @@ class IntegranteControllerTest {
 
     @Test
     void atualizar_integranteNaoEncontrado_deveRetornar404() throws Exception {
-        when(integranteRepository.existsById(99L)).thenReturn(false);
+        Integrante atualizado = Integrante.builder().nome("X").funcao("Y").build();
+
+        when(integranteService.atualizar(eq(99L), any(Integrante.class)))
+                .thenThrow(new EntityNotFoundException("Integrante não encontrado com id: 99"));
 
         mockMvc.perform(put("/api/integrantes/99")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rogerioCeni)))
-                .andExpect(status().isNotFound());
+                        .content(objectMapper.writeValueAsString(atualizado)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NOT_FOUND"));
     }
 
     // =========================================================================
@@ -148,22 +161,23 @@ class IntegranteControllerTest {
 
     @Test
     void deletar_integranteExistente_deveRetornar204() throws Exception {
-        when(integranteRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(integranteRepository).deleteById(1L);
+        doNothing().when(integranteService).deletar(1L);
 
         mockMvc.perform(delete("/api/integrantes/1"))
                 .andExpect(status().isNoContent());
 
-        verify(integranteRepository, times(1)).deleteById(1L);
+        verify(integranteService, times(1)).deletar(1L);
     }
 
     @Test
     void deletar_integranteNaoEncontrado_deveRetornar404() throws Exception {
-        when(integranteRepository.existsById(99L)).thenReturn(false);
+        doThrow(new EntityNotFoundException("Integrante não encontrado com id: 99"))
+                .when(integranteService).deletar(99L);
 
         mockMvc.perform(delete("/api/integrantes/99"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NOT_FOUND"));
 
-        verify(integranteRepository, never()).deleteById(any());
+        verify(integranteService, times(1)).deletar(99L);
     }
 }

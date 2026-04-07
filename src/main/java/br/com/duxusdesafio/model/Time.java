@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -39,10 +40,13 @@ public class Time {
 
     /**
      * Composição do time: lista de vínculos com integrantes.
-     * Carregado de forma EAGER para que os métodos do {@code ApiService}
-     * recebam os dados completos sem necessidade de queries adicionais.
+     *
+     * <p>Usa {@code FetchType.LAZY} para evitar N+1 queries ao listar times.
+     * O {@code @BatchSize(size = 50)} instrui o Hibernate a carregar as coleções
+     * em lotes quando necessário, reduzindo drasticamente o número de queries.</p>
      */
-    @OneToMany(mappedBy = "time", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "time", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 50)
     @JsonManagedReference
     @Builder.Default
     private List<ComposicaoTime> composicaoTimes = new ArrayList<>();

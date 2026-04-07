@@ -83,8 +83,8 @@
                         <td th:text="${t.nomeClube}"></td>
                         <td th:text="${#temporals.format(t.data, 'dd/MM/yyyy')}"></td>
                         <td>
-                            <span th:each="ct, iterStat : ${t.composicaoTimes}">
-                                <span th:text="${ct.integrante.nome}"></span><span th:if="!${iterStat.last}">, </span>
+                            <span th:each="nome, iterStat : ${t.integrantes}">
+                                <span th:text="${nome}"></span><span th:if="!${iterStat.last}">, </span>
                             </span>
                         </td>
                         <td>
@@ -121,23 +121,24 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body)
         });
-        if (resp.ok) {
+        if (resp.status === 201) {
             mostrarAlerta('Time criado com sucesso!', 'success');
             setTimeout(() => location.reload(), 800);
         } else {
-            const msg = await resp.text();
-            mostrarAlerta('Erro: ' + msg, 'danger');
+            const json = await resp.json().catch(() => ({mensagem: 'Erro desconhecido.'}));
+            mostrarAlerta('Erro: ' + (json.mensagem || JSON.stringify(json)), 'danger');
         }
     });
 
     async function deletarTime(id) {
         if (!confirm('Confirma a remoção deste time?')) return;
         const resp = await fetch('/api/times/' + id, {method: 'DELETE'});
-        if (resp.ok || resp.status === 204) {
+        if (resp.status === 204) {
             mostrarAlerta('Time removido.', 'warning');
             setTimeout(() => location.reload(), 800);
         } else {
-            mostrarAlerta('Erro ao remover time.', 'danger');
+            const json = await resp.json().catch(() => ({mensagem: 'Erro ao remover.'}));
+            mostrarAlerta('Erro: ' + json.mensagem, 'danger');
         }
     }
 

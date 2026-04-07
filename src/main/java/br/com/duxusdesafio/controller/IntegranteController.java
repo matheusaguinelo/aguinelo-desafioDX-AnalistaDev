@@ -1,66 +1,73 @@
 package br.com.duxusdesafio.controller;
 
+import br.com.duxusdesafio.dto.IntegranteResponse;
 import br.com.duxusdesafio.model.Integrante;
-import br.com.duxusdesafio.repository.IntegranteRepository;
+import br.com.duxusdesafio.service.IntegranteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.Valid;
-import java.util.List;
+import java.net.URI;
 
 /**
  * Controller REST para operações CRUD de {@link Integrante}.
- * Base URL: /api/integrantes
+ *
+ * <p>Delega toda lógica ao {@link IntegranteService} — sem acesso direto ao repositório.</p>
+ *
+ * <p>Base URL: /api/integrantes</p>
+ *
+ * <p>Paginação: {@code GET /api/integrantes?page=0&size=20&sort=nome,asc}</p>
  */
 @RestController
 @RequestMapping("/api/integrantes")
 public class IntegranteController {
 
-    private final IntegranteRepository integranteRepository;
+    private final IntegranteService integranteService;
 
-    public IntegranteController(IntegranteRepository integranteRepository) {
-        this.integranteRepository = integranteRepository;
+    public IntegranteController(IntegranteService integranteService) {
+        this.integranteService = integranteService;
     }
 
-    /** Lista todos os integrantes cadastrados. */
+    /** Lista integrantes com paginação. Padrão: página 0, 20 por página, ordenado por nome. */
     @GetMapping
-    public List<Integrante> listarTodos() {
-        return integranteRepository.findAll();
+    public Page<IntegranteResponse> listarTodos(
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
+        return integranteService.listarTodos(pageable);
     }
 
-    /** Busca um integrante pelo id. */
+    /** Busca um integrante pelo id. Retorna 404 se não encontrado. */
     @GetMapping("/{id}")
-    public ResponseEntity<Integrante> buscarPorId(@PathVariable Long id) {
-        return integranteRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<IntegranteResponse> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(integranteService.buscarPorId(id));
     }
 
-    /** Cria um novo integrante. */
+    /**
+     * Cria um novo integrante.
+     * Retorna 201 Created com header Location apontando para o recurso criado.
+     */
     @PostMapping
-    public ResponseEntity<Integrante> criar(@Valid @RequestBody Integrante integrante) {
-        integrante.setId(null); // garante que é uma inserção
-        Integrante salvo = integranteRepository.save(integrante);
-        return ResponseEntity.ok(salvo);
+    public ResponseEntity<IntegranteResponse> criar(@Valid @RequestBody Integrante integrante) {
+        IntegranteResponse salvo = integranteService.criar(integrante);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(salvo.getId()).toUri();
+        return ResponseEntity.created(location).body(salvo);
     }
 
-    /** Atualiza um integrante existente. */
+    /** Atualiza um integrante existente. Retorna 404 se não encontrado. */
     @PutMapping("/{id}")
-    public ResponseEntity<Integrante> atualizar(@PathVariable Long id,
-                                                @Valid @RequestBody Integrante integrante) {
-        if (!integranteRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        integrante.setId(id);
-        return ResponseEntity.ok(integranteRepository.save(integrante));
+    public ResponseEntity<IntegranteResponse> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody Integrante integrante) {
+        return ResponseEntity.ok(integranteService.atualizar(id, integrante));
     }
 
-    /** Remove um integrante pelo id. */
+    /** Remove um integrante pelo id. Retorna 204 No Content ou 404 se não encontrado. */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        if (!integranteRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        integranteRepository.deleteById(id);
+        integranteService.deletar(id);
         return ResponseEntity.noContent().build();
     }
 }

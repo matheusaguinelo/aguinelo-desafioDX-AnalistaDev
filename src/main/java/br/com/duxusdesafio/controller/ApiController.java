@@ -3,8 +3,9 @@ package br.com.duxusdesafio.controller;
 import br.com.duxusdesafio.dto.TimeDaDataResponse;
 import br.com.duxusdesafio.model.Integrante;
 import br.com.duxusdesafio.model.Time;
-import br.com.duxusdesafio.repository.TimeRepository;
 import br.com.duxusdesafio.service.ApiService;
+import br.com.duxusdesafio.service.TimeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,26 +20,23 @@ import java.util.stream.Collectors;
 
 /**
  * Controller REST que expõe os endpoints de processamento/análise de dados.
- * Todos os dados são carregados do banco e processados pelo {@link ApiService}
- * em Java — sem uso de funções de agregação SQL.
+ *
+ * <p>Os dados são carregados pelo {@link TimeService} e processados pelo
+ * {@link ApiService} em Java — sem uso de funções de agregação SQL.</p>
  *
  * <p>Base URL: /api</p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class ApiController {
 
     private final ApiService apiService;
-    private final TimeRepository timeRepository;
+    private final TimeService timeService;
 
-    public ApiController(ApiService apiService, TimeRepository timeRepository) {
+    public ApiController(ApiService apiService, TimeService timeService) {
         this.apiService = apiService;
-        this.timeRepository = timeRepository;
-    }
-
-    /** Carrega todos os times do banco */
-    private List<Time> carregarTodosOsTimes() {
-        return timeRepository.findAll();
+        this.timeService = timeService;
     }
 
     /**
@@ -50,7 +48,9 @@ public class ApiController {
     public ResponseEntity<?> timeDaData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
-        Time time = apiService.timeDaData(data, carregarTodosOsTimes());
+        log.info("GET /time-da-data - data={}", data);
+        List<Time> todos = timeService.listarTodosParaProcessamento();
+        Time time = apiService.timeDaData(data, todos);
 
         if (time == null) {
             return ResponseEntity.notFound().build();
@@ -73,7 +73,9 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        Integrante integrante = apiService.integranteMaisUsado(dataInicial, dataFinal, carregarTodosOsTimes());
+        log.info("GET /integrante-mais-usado - periodo=[{}, {}]", dataInicial, dataFinal);
+        Integrante integrante = apiService.integranteMaisUsado(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento());
 
         return integrante != null
                 ? ResponseEntity.ok(integrante)
@@ -90,7 +92,9 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        List<String> nomes = apiService.integrantesDoTimeMaisRecorrente(dataInicial, dataFinal, carregarTodosOsTimes());
+        log.info("GET /integrantes-do-time-mais-recorrente - periodo=[{}, {}]", dataInicial, dataFinal);
+        List<String> nomes = apiService.integrantesDoTimeMaisRecorrente(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento());
         return ResponseEntity.ok(nomes);
     }
 
@@ -104,10 +108,11 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        String funcao = apiService.funcaoMaisRecorrente(dataInicial, dataFinal, carregarTodosOsTimes());
+        log.info("GET /funcao-mais-recorrente - periodo=[{}, {}]", dataInicial, dataFinal);
+        String funcao = apiService.funcaoMaisRecorrente(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento());
 
         if (funcao == null) return ResponseEntity.notFound().build();
-
         return ResponseEntity.ok(Collections.singletonMap("Função", funcao));
     }
 
@@ -121,10 +126,11 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        String clube = apiService.clubeMaisRecorrente(dataInicial, dataFinal, carregarTodosOsTimes());
+        log.info("GET /clube-mais-recorrente - periodo=[{}, {}]", dataInicial, dataFinal);
+        String clube = apiService.clubeMaisRecorrente(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento());
 
         if (clube == null) return ResponseEntity.notFound().build();
-
         return ResponseEntity.ok(Collections.singletonMap("Clube", clube));
     }
 
@@ -138,8 +144,9 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        return ResponseEntity.ok(
-                apiService.contagemDeClubesNoPeriodo(dataInicial, dataFinal, carregarTodosOsTimes()));
+        log.info("GET /contagem-de-clubes - periodo=[{}, {}]", dataInicial, dataFinal);
+        return ResponseEntity.ok(apiService.contagemDeClubesNoPeriodo(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento()));
     }
 
     /**
@@ -152,7 +159,8 @@ public class ApiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal) {
 
-        return ResponseEntity.ok(
-                apiService.contagemPorFuncao(dataInicial, dataFinal, carregarTodosOsTimes()));
+        log.info("GET /contagem-por-funcao - periodo=[{}, {}]", dataInicial, dataFinal);
+        return ResponseEntity.ok(apiService.contagemPorFuncao(
+                dataInicial, dataFinal, timeService.listarTodosParaProcessamento()));
     }
 }

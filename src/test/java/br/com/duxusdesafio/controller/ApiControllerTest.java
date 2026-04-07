@@ -3,18 +3,16 @@ package br.com.duxusdesafio.controller;
 import br.com.duxusdesafio.model.ComposicaoTime;
 import br.com.duxusdesafio.model.Integrante;
 import br.com.duxusdesafio.model.Time;
-import br.com.duxusdesafio.repository.TimeRepository;
 import br.com.duxusdesafio.service.ApiService;
+import br.com.duxusdesafio.service.TimeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.LocalDate;
 import java.util.*;
-
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,8 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * delega corretamente ao {@link ApiService} e retorna as respostas no
  * formato esperado, sem acessar o banco de dados.</p>
  *
- * <p>O {@link TimeRepository} é mockado para simular o carregamento de todos
- * os times, e o {@link ApiService} é mockado para isolar a lógica de negócio.</p>
+ * <p>{@link TimeService} é mockado para simular o carregamento de todos os times,
+ * e {@link ApiService} é mockado para isolar a lógica de negócio.</p>
  */
 @WebMvcTest(ApiController.class)
 class ApiControllerTest {
@@ -40,19 +38,17 @@ class ApiControllerTest {
     private ApiService apiService;
 
     @MockBean
-    private TimeRepository timeRepository;
+    private TimeService timeService;
 
     private Integrante hernanes;
     private Integrante kaka;
-    private Integrante rogerioCeni;
     private Time timeSP;
     private List<Time> todosOsTimes;
 
     @BeforeEach
     void setUp() {
-        hernanes    = Integrante.builder().id(1L).nome("Hernanes").funcao("Volante").build();
-        kaka        = Integrante.builder().id(2L).nome("Kaká").funcao("Meia").build();
-        rogerioCeni = Integrante.builder().id(3L).nome("Rogério Ceni").funcao("Goleiro").build();
+        hernanes = Integrante.builder().id(1L).nome("Hernanes").funcao("Volante").build();
+        kaka     = Integrante.builder().id(2L).nome("Kaká").funcao("Meia").build();
 
         timeSP = Time.builder()
                 .id(1L)
@@ -65,7 +61,7 @@ class ApiControllerTest {
         timeSP.getComposicaoTimes().addAll(Arrays.asList(ct1, ct2));
 
         todosOsTimes = Collections.singletonList(timeSP);
-        when(timeRepository.findAll()).thenReturn(todosOsTimes);
+        when(timeService.listarTodosParaProcessamento()).thenReturn(todosOsTimes);
     }
 
     // =========================================================================
