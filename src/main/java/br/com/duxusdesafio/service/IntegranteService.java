@@ -1,8 +1,10 @@
 package br.com.duxusdesafio.service;
 
 import br.com.duxusdesafio.dto.IntegranteResponse;
+import br.com.duxusdesafio.exception.BusinessRuleException;
 import br.com.duxusdesafio.exception.EntityNotFoundException;
 import br.com.duxusdesafio.model.Integrante;
+import br.com.duxusdesafio.repository.ComposicaoTimeRepository;
 import br.com.duxusdesafio.repository.IntegranteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class IntegranteService {
 
     private final IntegranteRepository integranteRepository;
+    private final ComposicaoTimeRepository composicaoTimeRepository;
 
     // =========================================================================
     // Leitura
@@ -117,6 +120,10 @@ public class IntegranteService {
     public void deletar(Long id) {
         if (!integranteRepository.existsById(id)) {
             throw new EntityNotFoundException("Integrante não encontrado com id: " + id);
+        }
+        if (composicaoTimeRepository.existsByIntegranteId(id)) {
+            throw new BusinessRuleException(
+                    "Não é possível remover o integrante pois ele está escalado em um ou mais times.");
         }
         integranteRepository.deleteById(id);
         log.info("Integrante removido: id={}", id);

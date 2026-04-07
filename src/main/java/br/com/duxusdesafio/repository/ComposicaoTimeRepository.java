@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ComposicaoTimeRepository extends JpaRepository<ComposicaoTime, Long> {
+
+    boolean existsByIntegranteId(Long integranteId);
 }
